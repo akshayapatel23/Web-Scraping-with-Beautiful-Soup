@@ -1,0 +1,48 @@
+import requests
+from bs4 import BeautifulSoup
+import csv
+
+# Function to extract product data from a single page
+def extract_product_data(page_url):
+    response = requests.get(page_url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    product_data = []
+    products = soup.find_all('div', class_='product-item')
+
+    for product in products:
+        product_name = product.find('h2', class_='product-title').text.strip()
+        product_price = product.find('span', class_='price').text.strip()
+        product_data.append([product_name, product_price])
+
+    return product_data
+
+# Function to handle pagination and scrape multiple pages
+def scrape_multiple_pages(base_url, num_pages):
+    all_product_data = []
+    
+    for page in range(1, num_pages + 1):
+        page_url = f"{base_url}?page={page}"
+        print(f"Scraping page {page}: {page_url}")
+        product_data = extract_product_data(page_url)
+        all_product_data.extend(product_data)
+
+    return all_product_data
+
+# Base URL of the website to scrape
+base_url = 'https://example.com/products'
+
+# Number of pages to scrape
+num_pages = 5
+
+# Scrape data from multiple pages
+all_product_data = scrape_multiple_pages(base_url, num_pages)
+
+# Save the data to a CSV file
+csv_file = 'products.csv'
+with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Product Name', 'Price'])
+    writer.writerows(all_product_data)
+
+print(f"Data has been successfully scraped and saved to {csv_file}")
